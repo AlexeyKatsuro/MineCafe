@@ -22,4 +22,9 @@ public class Category  extends Content {
     public void setContents(List<Content> contents) {
         mContents = contents;
     }
+
+    @Override
+    public String draw() {
+        return "Category";
+    }
 }

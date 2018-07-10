@@ -18,6 +18,10 @@ public class Content  {
         mDrawableId = drawableId;
     }
 
+    public String draw(){
+        return "Content";
+    }
+
     public String getTitle() {
         return mTitle;
     }
