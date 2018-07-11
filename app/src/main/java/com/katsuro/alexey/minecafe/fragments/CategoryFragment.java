@@ -2,46 +2,53 @@ package com.katsuro.alexey.minecafe.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.gson.Gson;
-import com.katsuro.alexey.minecafe.Category;
-import com.katsuro.alexey.minecafe.Content;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.reward.RewardItem;
+import com.google.android.gms.ads.reward.RewardedVideoAd;
+import com.google.android.gms.ads.reward.RewardedVideoAdListener;
+import com.katsuro.alexey.minecafe.AdBlocker;
+import com.katsuro.alexey.minecafe.holders.ContentHolder;
+import com.katsuro.alexey.minecafe.holders.DetailHolder;
+import com.katsuro.alexey.minecafe.model.Category;
 import com.katsuro.alexey.minecafe.ContentAdapter;
 import com.katsuro.alexey.minecafe.ContentLab;
-import com.katsuro.alexey.minecafe.Detail;
 import com.katsuro.alexey.minecafe.R;
 
-import java.util.ArrayList;
-import java.util.List;
 
+public class CategoryFragment extends Fragment implements RewardedVideoAdListener {
 
-public class CategoryFragment extends Fragment {
-
-    private final static String AGR_CATEGORY = "arg_category";
+    private final static String ARG_CATEGORY = "arg_category";
     private static final String TAG = CategoryFragment.class.getSimpleName();
+
+    private RewardedVideoAd mRewardedVideoAd;
+    private AdRequest adRequest = new AdRequest.Builder()
+            .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+            .build();
 
     private RecyclerView mDetailRecyclerView;
     private ContentAdapter mAdapter;
 
     private Category mCategory;
 
-
     public static CategoryFragment newInstance(Category category) {
 
         Bundle args = new Bundle();
-        //String jsonCategory = new Gson().toJson(category);
-        args.putString(AGR_CATEGORY,category.getTitle());
+        args.putString(ARG_CATEGORY,category.getTitle());
         CategoryFragment fragment = new CategoryFragment();
         fragment.setArguments(args);
         return fragment;
@@ -54,24 +61,47 @@ public class CategoryFragment extends Fragment {
 
     private void updateUI() {
         if(mAdapter == null){
-            mAdapter = new ContentAdapter(R.layout.detail_list_item,mCategory.getContents());
+            mAdapter = new ContentAdapter(R.layout.detail_list_item,mCategory.getContents()){
+
+                @Override
+                public ContentHolder createContentHolder(Context context, View view) {
+                    return new DetailHolder(context,view);
+                }
+            };
+            mAdapter.setOnHolderItemClickListener(new ContentAdapter.OnHolderItemClickListener() {
+                @Override
+                public void onHolderItemClick(ContentHolder holder, View view) {
+                    if (mRewardedVideoAd.isLoaded() &&
+                            AdBlocker.get(getActivity()).isRewardedAdAvailable()) {
+                        mRewardedVideoAd.show();
+                    }
+                }
+            });
             mDetailRecyclerView.setAdapter(mAdapter);
         } else {
             mAdapter.setContentList(mCategory.getContents());
             mAdapter.notifyDataSetChanged();
         }
     }
+
+    private void loadRewardedVideoAd() {
+        mRewardedVideoAd.loadAd("ca-app-pub-3940256099942544/5224354917",
+                adRequest);
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG,"onCreate");
         Bundle args  = getArguments();
-        String title = args.getString(AGR_CATEGORY);
-       // String jsonCategory = args.getString(AGR_CATEGORY,null);
+        String title = args.getString(ARG_CATEGORY);
         mCategory = (Category) ContentLab.get(getActivity()).getContent(title);
-        //mCategory = new Gson().fromJson(jsonCategory,Category.class);
-        setTitle(mCategory.getTitle());
 
+
+
+        mRewardedVideoAd = MobileAds.getRewardedVideoAdInstance(getActivity());
+        mRewardedVideoAd.setRewardedVideoAdListener(this);
+        loadRewardedVideoAd();
     }
 
     @Nullable
@@ -79,7 +109,17 @@ public class CategoryFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_category,container,false);
+
+        Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setBackgroundResource(R.color.colorPrimaryTrans);
+        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+        TextView mTitle = (TextView) toolbar.findViewById(R.id.toolbar_title);
+        mTitle.setText(mCategory.getTitle());
+
         mDetailRecyclerView = view.findViewById(R.id.detail_recycler_view);
+        mDetailRecyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
         mDetailRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
 
@@ -87,72 +127,52 @@ public class CategoryFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onRewardedVideoAdLoaded() {
+
+    }
+
+    @Override
+    public void onRewardedVideoAdOpened() {
+
+    }
+
+    @Override
+    public void onRewardedVideoStarted() {
+
+    }
+
+    @Override
+    public void onRewardedVideoAdClosed() {
+
+        AdBlocker.get(getActivity()).blockRewardedAdOnTime(30*1000);
+        loadRewardedVideoAd();
+    }
+
+    @Override
+    public void onRewarded(RewardItem rewardItem) {
+
+    }
+
+    @Override
+    public void onRewardedVideoAdLeftApplication() {
+
+    }
+
+    @Override
+    public void onRewardedVideoAdFailedToLoad(int i) {
+
+    }
+
+    @Override
+    public void onRewardedVideoCompleted() {
+
+    }
 
 
-//    private class DetailHolder extends RecyclerView.ViewHolder
-//            implements View.OnClickListener{
-//
-//        private ImageView mDetailIcon;
-//        private TextView mTitleTextView;
-//        private Detail mDetail;
-//        private Context mContext;
-//
-//        public DetailHolder(Context context, View itemView) {
-//            super(itemView);
-//            mContext = context;
-//            mDetailIcon = itemView.findViewById(R.id.icon_image_view);
-//            mTitleTextView = itemView.findViewById(R.id.title_text_view);
-//            itemView.setOnClickListener(this);
-//        }
-//
-//        public void bindHolder(Detail detail){
-//            mDetail = detail;
-//            mDetailIcon.setImageResource(mDetail.getIconId());
-//            mTitleTextView.setText(mDetail.getTitle());
-//        }
-//
-//        @Override
-//        public void onClick(View v) {
-////            Intent intent = CategoryActivity.newIntent(mContext,mCategory);
-////            startActivity(intent);
-//        }
-//    }
-//    private class DetailAdapter extends RecyclerView.Adapter<DetailHolder>{
-//
-//        private Context mContext;
-//        private List<Detail> mDetailList;
-//
-//
-//        public DetailAdapter(Context context, List<Detail> detailList) {
-//            mContext = context;
-//            mDetailList = detailList;
-//        }
-//
-//        @Override
-//        public DetailHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-//            View view = LayoutInflater.from(mContext)
-//                    .inflate(R.layout.detail_list_item,parent,false);
-//
-//            return new DetailHolder(mContext,view);
-//        }
-//
-//        @Override
-//        public void onBindViewHolder(DetailHolder holder, int position) {
-//            holder.bindHolder(mDetailList.get(position));
-//        }
-//
-//        @Override
-//        public int getItemCount() {
-//            return mDetailList.size();
-//        }
-//
-//        public List<Detail> getDetailList() {
-//            return mDetailList;
-//        }
-//
-//        public void setDetailList(List<Detail> detailList) {
-//            mDetailList = detailList;
-//        }
-//    }
+    @Override
+    public void onDetach() {
+        super.onDetach();
 
+    }
 }

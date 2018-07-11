@@ -6,7 +6,7 @@ import android.support.v4.app.Fragment;
 import android.os.Bundle;
 
 import com.katsuro.alexey.minecafe.ContentLab;
-import com.katsuro.alexey.minecafe.Detail;
+import com.katsuro.alexey.minecafe.model.Detail;
 import com.katsuro.alexey.minecafe.fragments.DetailFragment;
 
 public class DetailActivity extends SingleFragmentActivity {

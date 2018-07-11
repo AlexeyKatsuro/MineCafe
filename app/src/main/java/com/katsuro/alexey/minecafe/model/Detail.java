@@ -1,4 +1,4 @@
-package com.katsuro.alexey.minecafe;
+package com.katsuro.alexey.minecafe.model;
 
 
 
@@ -21,8 +21,11 @@ public class Detail extends Content {
         mIconId = iconId;
     }
 
-    @Override
-    public String draw() {
-        return "Detail";
+    public String getDescription() {
+        return mDescription;
+    }
+
+    public void setDescription(String description) {
+        mDescription = description;
     }
 }

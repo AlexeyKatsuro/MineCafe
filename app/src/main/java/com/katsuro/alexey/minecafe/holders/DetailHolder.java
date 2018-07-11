@@ -1,12 +1,14 @@
-package com.katsuro.alexey.minecafe;
+package com.katsuro.alexey.minecafe.holders;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.katsuro.alexey.minecafe.model.Content;
+import com.katsuro.alexey.minecafe.model.Detail;
+import com.katsuro.alexey.minecafe.R;
 import com.katsuro.alexey.minecafe.activities.DetailActivity;
 
 /**
@@ -35,8 +37,14 @@ public class DetailHolder extends ContentHolder {
     }
 
     @Override
+    public Content getContent() {
+        return mDetail;
+    }
+
+    @Override
     public void onClick(View v) {
             Intent intent = DetailActivity.newIntent(getContext(),mDetail);
             getContext().startActivity(intent);
+            mOnHolderItemClickListener.onHolderItemClick(this,v);
     }
 }

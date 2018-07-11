@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MineCafe</string>
+    <string name="app_name">Mine Cafe</string>
 
     <string name="burgers">Бургеры</string>
     <string name="pizza">Пицца</string>
     <string name="sandwiches">Бутерброды</string>
     <string name="salads">Салаты</string>
-    <string name="beverages">Yапитки</string>
+    <string name="beverages">Напитки</string>
     <string name="dessert">Десерты</string>
+
+    <string name="hot">Горячие</string>
+    <string name="fresh">Холодные</string>
+    <string name="alcoholic">Алкогольные</string>
 </resources>

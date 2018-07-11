@@ -1,4 +1,4 @@
-package com.katsuro.alexey.minecafe;
+package com.katsuro.alexey.minecafe.model;
 
 /**
  * Created by alexey on 7/10/18.
@@ -16,10 +16,6 @@ public class Content  {
     public Content(String title, int drawableId) {
         mTitle = title;
         mDrawableId = drawableId;
-    }
-
-    public String draw(){
-        return "Content";
     }
 
     public String getTitle() {

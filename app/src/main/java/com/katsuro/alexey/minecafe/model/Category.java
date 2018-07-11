@@ -1,4 +1,4 @@
-package com.katsuro.alexey.minecafe;
+package com.katsuro.alexey.minecafe.model;
 
 import java.util.List;
 
@@ -21,10 +21,5 @@ public class Category  extends Content {
 
     public void setContents(List<Content> contents) {
         mContents = contents;
-    }
-
-    @Override
-    public String draw() {
-        return "Category";
     }
 }

@@ -1,29 +1,32 @@
 package com.katsuro.alexey.minecafe.fragments;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.TextView;
 
-import com.katsuro.alexey.minecafe.Category;
-import com.katsuro.alexey.minecafe.Content;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
+import com.katsuro.alexey.minecafe.AdBlocker;
+import com.katsuro.alexey.minecafe.holders.CategoriesHolder;
+import com.katsuro.alexey.minecafe.holders.ContentHolder;
+import com.katsuro.alexey.minecafe.model.Category;
 import com.katsuro.alexey.minecafe.ContentAdapter;
 import com.katsuro.alexey.minecafe.ContentLab;
-import com.katsuro.alexey.minecafe.Detail;
 import com.katsuro.alexey.minecafe.R;
-import com.katsuro.alexey.minecafe.activities.CategoryActivity;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by alexey on 7/10/18.
@@ -32,34 +35,68 @@ import java.util.List;
 public class CategoryListFragment extends Fragment{
 
     private static final String TAG = CategoryListFragment.class.getSimpleName();
+    private static final String ARG_CATEGORY = "arg_category";
+
+    private AdView mAdView;
+    private InterstitialAd mInterstitialAd;
+    private  AdRequest adRequest = new AdRequest.Builder()
+            .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+            .build();
+
     private RecyclerView mCategoriesRecyclerView;
     private ContentAdapter mAdapter;
+
+
     private Category mCategory;
+
+    private String APP_ID = "ca-app-pub-3185275635528943~9700824884";
+    private String TRAINING_ID = "ca-app-pub-3940256099942544~3347511713";
+
+
+    public static CategoryListFragment newInstance(Category category) {
+        Bundle args = new Bundle();
+        args.putString(ARG_CATEGORY,category.getTitle());
+        CategoryListFragment fragment = new CategoryListFragment();
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     public static CategoryListFragment newInstance() {
         CategoryListFragment fragment = new CategoryListFragment();
         return fragment;
     }
 
+
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        if(mCategory==null) {
+        MobileAds.initialize(getActivity(), TRAINING_ID);
+        Bundle arg = getArguments();
+
+        if(arg!=null) {
+            String title = arg.getString(ARG_CATEGORY);
+            mCategory = (Category) ContentLab.get(getActivity()).getContent(title);
+        } else {
             mCategory = ContentLab.get(getActivity()).getStartCategory();
         }
 
+        mInterstitialAd = new InterstitialAd(getActivity());
+        mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/1033173712");
+        mInterstitialAd.loadAd(adRequest);
+        mInterstitialAd.setAdListener(new AdListener(){
+            @Override
+            public void onAdClosed() {
+                super.onAdClosed();
+                AdBlocker.get(getActivity()).blockInterstitialAdOnTime(30*1000);
+                mInterstitialAd.loadAd(adRequest);
+            }
+        });
     }
 
-    private void updateUI() {
-        if(mAdapter == null){
-            mAdapter = new ContentAdapter(R.layout.category_list_item,mCategory.getContents());
-            mCategoriesRecyclerView.setAdapter(mAdapter);
-        } else {
-            mAdapter.setContentList(mCategory.getContents());
-            mAdapter.notifyDataSetChanged();
-        }
-    }
+
+
 
     @Nullable
     @Override
@@ -69,76 +106,54 @@ public class CategoryListFragment extends Fragment{
         mCategoriesRecyclerView = view.findViewById(R.id.categories_recycler_view);
         mCategoriesRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(),3));
 
+        mAdView = view.findViewById(R.id.adView);
+
+        mAdView.loadAd(adRequest);
+
+
+        Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setBackgroundResource(R.color.colorPrimaryTrans);
+        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+        TextView mTitle = (TextView) toolbar.findViewById(R.id.toolbar_title);
+        mTitle.setText(mCategory.getTitle());
+
         updateUI();
         return view;
     }
 
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        AdBlocker.get(getActivity()).cancelBlocks();
+    }
 
+    private void updateUI() {
+        if(mAdapter == null){
+            mAdapter = new ContentAdapter(R.layout.category_list_item, mCategory.getContents()) {
+                @Override
+                public ContentHolder createContentHolder(Context context, View view) {
+                    return new CategoriesHolder(context,view);
+                }
+            };
+            mAdapter.setOnHolderItemClickListener(new ContentAdapter.OnHolderItemClickListener() {
+                @Override
+                public void onHolderItemClick(ContentHolder holder, View view) {
+                    if(mInterstitialAd.isLoaded() &&
+                            AdBlocker.get(getActivity()).isInterstitialAdAvailable()) {
+                        mInterstitialAd.show();
+                    }
+                }
+            });
 
-//    private class CategoriesHolder extends RecyclerView.ViewHolder
-//            implements View.OnClickListener{
-//
-//        private ImageButton mCategoryImageButton;
-//        private TextView mTitleTextView;
-//        private Category mCategory;
-//        private Context mContext;
-//
-//        public CategoriesHolder(Context context, View itemView) {
-//            super(itemView);
-//            mContext = context;
-//            mCategoryImageButton = itemView.findViewById(R.id.category_image_button);
-//            mTitleTextView = itemView.findViewById(R.id.category_title);
-//            mCategoryImageButton.setOnClickListener(this);
-//        }
-//
-//        public void bindHolder(Category category){
-//            mCategory = category;
-//            mCategoryImageButton.setImageResource(mCategory.getDrawableId());
-//            mTitleTextView.setText(mCategory.getTitle());
-//        }
-//
-//        @Override
-//        public void onClick(View v) {
-//            Intent intent = CategoryActivity.newIntent(mContext,mCategory);
-//            startActivity(intent);
-//        }
-//    }
-//    private class CategoriesAdapter extends RecyclerView.Adapter<CategoriesHolder>{
-//
-//        private Context mContext;
-//        private List<Category> mCategoryList;
-//
-//        public CategoriesAdapter(Context context, List<Category> categoryList) {
-//            mContext = context;
-//            mCategoryList = categoryList;
-//        }
-//
-//        @Override
-//        public CategoriesHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-//            View view = LayoutInflater.from(mContext)
-//                    .inflate(R.layout.category_list_item,parent,false);
-//
-//            return new CategoriesHolder(mContext,view);
-//        }
-//
-//        @Override
-//        public void onBindViewHolder(CategoriesHolder holder, int position) {
-//            holder.bindHolder(mCategoryList.get(position));
-//        }
-//
-//        @Override
-//        public int getItemCount() {
-//            return mCategoryList.size();
-//        }
-//
-//        public List<Category> getCategoryList() {
-//            return mCategoryList;
-//        }
-//
-//        public void setCategoryList(List<Category> categoryList) {
-//            mCategoryList = categoryList;
-//        }
-//    }
+            mCategoriesRecyclerView.setAdapter(mAdapter);
+        } else {
+            mAdapter.setContentList(mCategory.getContents());
+            mAdapter.notifyDataSetChanged();
+        }
+    }
+
 
 
 }
