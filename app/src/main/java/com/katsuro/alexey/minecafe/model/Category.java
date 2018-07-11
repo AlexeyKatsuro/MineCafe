@@ -1,4 +1,4 @@
-package com.katsuro.alexey.minecafe;
+package com.katsuro.alexey.minecafe.model;
 
 import java.util.List;
 

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MineCafe</string>
+    <string name="app_name">Mine Cafe</string>
 
     <string name="burgers">Burgers</string>
     <string name="pizza">Pizza</string>
@@ -7,6 +7,10 @@
     <string name="salads">Salads</string>
     <string name="beverages">Beverage</string>
     <string name="dessert">Dessert</string>
+
+    <string name="hot">Hot</string>
+    <string name="fresh">Fresh</string>
+    <string name="alcoholic">Alcoholic</string>
 
 
 
